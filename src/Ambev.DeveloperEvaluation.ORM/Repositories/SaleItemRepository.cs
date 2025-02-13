@@ -1,4 +1,5 @@
 ﻿using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Extensions;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,5 +60,19 @@ public class SaleItemRepository : ISaleItemRepository
         _context.SaleItems.Remove(saleItem);
         await _context.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    /// <summary>
+    /// Get All SaleItem in the database
+    /// </summary>
+    /// <returns>The SaleItem founds</returns>
+    public async Task<PaginatedList<SaleItem>> GetAllSalesItems(int pageNumber, int pageSize)
+    {
+        var totalItems = await _context.SaleItems.CountAsync();
+        var items = await _context.SaleItems
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        return new PaginatedList<SaleItem>(items, totalItems, pageNumber, pageSize);
     }
 }

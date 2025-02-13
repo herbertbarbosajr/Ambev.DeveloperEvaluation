@@ -2,6 +2,7 @@ using Ambev.DeveloperEvaluation.Common.Security;
 using Ambev.DeveloperEvaluation.Common.Validation;
 using Ambev.DeveloperEvaluation.Domain.Common;
 using Ambev.DeveloperEvaluation.Domain.Validation;
+using System.Text.Json.Serialization;
 
 namespace Ambev.DeveloperEvaluation.Domain.Entities;
 
@@ -36,16 +37,21 @@ public class SaleItem : BaseEntity, ISaleItem
     public decimal Discount { get; set; }
 
     /// <summary>
-    /// Gets the Sale's role in the system.
     /// Determines the Sale's TotalAmount.
     /// </summary>
-    public decimal TotalAmount { get; set; }  
+    public decimal TotalAmount { get; set; }
+
+    /// <summary>
+    /// Gets the Sale's FK.
+    /// Determines the Sale's.
+    /// </summary>
+    public Guid SaleId { get; set; }
 
     /// <summary>
     /// Gets the unique identifier of the Sale.
     /// </summary>
     /// <returns>The Sale's ID as a string.</returns>
-    string ISaleItem.Id => ProductId.ToString();
+    string ISaleItem.Id => Id.ToString();
 
     /// <summary>
     /// Performs validation of the Sale entity using the SaleValidator rules.
@@ -58,10 +64,6 @@ public class SaleItem : BaseEntity, ISaleItem
     /// <remarks>
     /// <listheader>The validation includes checking:</listheader>
     /// <list type="bullet">Salename format and length</list>
-    /// <list type="bullet">Email format</list>
-    /// <list type="bullet">unit price format</list>
-    /// <list type="bullet">Password complexity requirements</list>
-    /// <list type="bullet">Role validity</list>
     /// 
     /// </remarks>
     public ValidationResultDetail Validate()

@@ -1,4 +1,5 @@
 ﻿using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Extensions;
 
 namespace Ambev.DeveloperEvaluation.Domain.Repositories;
 
@@ -34,5 +35,5 @@ public interface ISaleRepository
     /// Get All Sale in the database
     /// </summary>
     /// <returns>The Sales founds</returns>
-    Task<IEnumerable<Sale>> GetAllSales();
+    Task<PaginatedList<Sale>> GetAllSales(int pageNumber, int pageSize);
 }

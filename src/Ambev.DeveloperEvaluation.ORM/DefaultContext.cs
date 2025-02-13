@@ -18,6 +18,12 @@ public class DefaultContext : DbContext
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Sale>()
+            .HasMany(s => s.Items)
+            .WithOne()
+            .HasForeignKey(s => s.SaleId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
 public class YourDbContextFactory : IDesignTimeDbContextFactory<DefaultContext>

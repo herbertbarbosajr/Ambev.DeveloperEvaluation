@@ -8,6 +8,8 @@ using Ambev.DeveloperEvaluation.WebApi.Features.SalesItems.GetSalesItems;
 using Ambev.DeveloperEvaluation.Application.SaleItems.GetSaleItems;
 using Ambev.DeveloperEvaluation.WebApi.Features.SalesItems.DeleteSalesItems;
 using Ambev.DeveloperEvaluation.Application.SaleItems.DeleteSaleItems;
+using Ambev.DeveloperEvaluation.SaleItems.GetSaleItems;
+using Ambev.DeveloperEvaluation.Domain.Extensions;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.SalesItems;
 
@@ -87,6 +89,35 @@ public class SalesItemsController : BaseController
             Success = true,
             Message = "SalesItems retrieved successfully",
             Data = _mapper.Map<GetSalesItemsResult>(response)
+        });
+    }
+
+    /// <summary>
+    /// Retrieves all SalesItems
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The SalesItems details if found</returns>
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponseWithData<GetSalesItemsResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAllSalesItems([FromRoute] CancellationToken cancellationToken, int pageNumer = 1, int pageSize = 10)
+    {
+        var request = new GetSalesItemsRequestPagination { PageNumber = pageNumer, PageSize = pageSize };
+        var validator = new GetSalesItemsRequestPaginationValidator();
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+            return BadRequest(validationResult.Errors);
+
+        var command = new GetSalesItemsPagination(pageNumer, pageSize);
+        var response = await _mediator.Send(command, cancellationToken);
+
+        return Ok(new ApiResponseWithData<PaginatedList<GetSalesItemsResult>>
+        {
+            Success = true,
+            Message = "SalesItems retrieved successfully",
+            Data = _mapper.Map<PaginatedList<GetSalesItemsResult>>(response)
         });
     }
 

@@ -12,7 +12,6 @@ public class SaleItemConfiguration : IEntityTypeConfiguration<SaleItem>
 
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Id).HasColumnType("uuid").HasDefaultValueSql("gen_random_uuid()");
-
         builder.Property(u => u.Quantity).IsRequired().HasMaxLength(50);
         builder.Property(u => u.UnitPrice).IsRequired().HasMaxLength(100);
         builder.Property(u => u.Discount).IsRequired().HasMaxLength(100);

@@ -2,13 +2,14 @@ using AutoMapper;
 using MediatR;
 using FluentValidation;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Ambev.DeveloperEvaluation.Domain.Extensions;
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 
 /// <summary>
 /// Handler for processing GetSaleCommand requests
 /// </summary>
-public class GetSaleHandler : IRequestHandler<GetSaleCommand, GetSaleResult>
+public class GetSaleHandler : IRequestHandler<GetSaleCommand,GetSaleResult>
 {
     private readonly ISaleRepository _SaleRepository;
     private readonly IMapper _mapper;
@@ -53,12 +54,12 @@ public class GetSaleHandler : IRequestHandler<GetSaleCommand, GetSaleResult>
     /// </summary>
     /// <returns>The Sale if found</returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<IEnumerable<GetSaleResult>> Handle()
+    public async Task<PaginatedList<GetSaleResult>> Handle(int pageNumber, int pageSize)
     {
-        var Sale = await _SaleRepository.GetAllSales();
+        var Sale = await _SaleRepository.GetAllSales(pageNumber, pageSize);
         if (Sale == null)
             throw new KeyNotFoundException($"Sales not found");
 
-        return _mapper.Map<IEnumerable<GetSaleResult>>(Sale);
+        return _mapper.Map<PaginatedList<GetSaleResult>>(Sale);
     }
 }
