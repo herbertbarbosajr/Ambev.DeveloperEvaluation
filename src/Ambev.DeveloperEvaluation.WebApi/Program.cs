@@ -52,6 +52,16 @@ public class Program
 
             builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
+            builder.Services.AddCors(opt =>
+            {
+                opt.AddPolicy("productApp", builder =>
+                {
+                    builder.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+                });
+            });
+
             var app = builder.Build();
             app.UseMiddleware<ValidationExceptionMiddleware>();
 
@@ -61,6 +71,7 @@ public class Program
                 app.UseSwaggerUI();
             }
 
+            app.UseCors("productApp");
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
