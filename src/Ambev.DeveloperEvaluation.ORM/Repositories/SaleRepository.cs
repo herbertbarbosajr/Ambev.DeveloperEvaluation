@@ -44,7 +44,6 @@ public class SaleRepository : ISaleRepository
         var items = await _context.Sales
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Include(c => c.Items)
             .ToListAsync();
         return new PaginatedList<Sale>(items, totalItems, pageNumber, pageSize);
     }
