@@ -1,4 +1,5 @@
 using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Extensions;
 
 namespace Ambev.DeveloperEvaluation.Domain.Repositories;
 
@@ -31,4 +32,10 @@ public interface ISaleItemRepository
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if the sale was deleted, false if not found</returns>
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get All SalesItems in the database
+    /// </summary>
+    /// <returns>The SalesItems founds</returns>
+    Task<PaginatedList<SaleItem>> GetAllSalesItems(int pageNumber, int pageSize);
 }

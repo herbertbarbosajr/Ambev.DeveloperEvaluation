@@ -1,4 +1,5 @@
 ﻿using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Extensions;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,9 +38,15 @@ public class SaleRepository : ISaleRepository
     /// Get All Sale in the database
     /// </summary>
     /// <returns>The Sales founds</returns>
-    public async Task<IEnumerable<Sale>> GetAllSales()
+    public async Task<PaginatedList<Sale>> GetAllSales(int pageNumber, int pageSize)
     {
-        return await _context.Sales.ToListAsync();
+        var totalItems = await _context.Sales.CountAsync();
+        var items = await _context.Sales
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Include(c => c.Items)
+            .ToListAsync();
+        return new PaginatedList<Sale>(items, totalItems, pageNumber, pageSize);
     }
     /// <summary>
     /// Retrieves a Sale by their unique identifier
