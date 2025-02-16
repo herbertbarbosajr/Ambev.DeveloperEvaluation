@@ -3,7 +3,10 @@ using MediatR;
 using FluentValidation;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Ambev.DeveloperEvaluation.Domain.Entities;
-using Ambev.DeveloperEvaluation.Common.Security;
+using Ambev.DeveloperEvaluation.Domain.BusinessRolesValidations;
+using Microsoft.Extensions.Logging;
+using FluentValidation.Results;
+
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 
@@ -12,67 +15,57 @@ namespace Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 /// </summary>
 public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleResult>
 {
-    private readonly ISaleRepository _SaleRepository;
+    private readonly ISaleRepository _saleRepository;
     private readonly IMapper _mapper;
+    private readonly DiscountBusinessRuleHandler _discountBusinessRuleHandler;
+    private readonly ILogger<CreateSaleHandler> _logger;
+    private readonly IValidator<CreateSaleCommand> _validator;
 
-    /// <summary>
-    /// Initializes a new instance of CreateSaleHandler
-    /// </summary>
-    /// <param name="SaleRepository">The Sale repository</param>
-    /// <param name="mapper">The AutoMapper instance</param>
-    /// <param name="validator">The validator for CreateSaleCommand</param>
-    public CreateSaleHandler(ISaleRepository SaleRepository, IMapper mapper)
+    public CreateSaleHandler(
+        ISaleRepository saleRepository,
+        IMapper mapper,
+        DiscountBusinessRuleHandler discountBusinessRule,
+        ILogger<CreateSaleHandler> logger,
+        IValidator<CreateSaleCommand> validator)
     {
-        _SaleRepository = SaleRepository;
+        _saleRepository = saleRepository;
         _mapper = mapper;
-
+        _discountBusinessRuleHandler = discountBusinessRule;
+        _logger = logger;
+        _validator = validator;
     }
 
-    /// <summary>
-    /// Handles the CreateSaleCommand request
-    /// </summary>
-    /// <param name="command">The CreateSale command</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>The created Sale details</returns>
     public async Task<CreateSaleResult> Handle(CreateSaleCommand command, CancellationToken cancellationToken)
     {
-        var validator = new CreateSaleCommandValidator();
-        var validationResult = await validator.ValidateAsync(command, cancellationToken);
+        var validationResult = await ValidateCommand(command, cancellationToken);
 
         if (!validationResult.IsValid)
-            throw new ValidationException(validationResult.Errors);
+        {
+            HandleValidationErrors(command, validationResult);
+        }
 
-        var Sale = _mapper.Map<Sale>(command);
-        BusinessRules(Sale);
-        var createdSale = await _SaleRepository.CreateAsync(Sale, cancellationToken);
+        var sale = _mapper.Map<Sale>(command);
+        _discountBusinessRuleHandler.Apply(sale);
+        var createdSale = await _saleRepository.CreateAsync(sale, cancellationToken);
         var result = _mapper.Map<CreateSaleResult>(createdSale);
+        LogSuccess(command);
         return result;
     }
 
-    private void BusinessRules(Sale sale)
+    private async Task<ValidationResult> ValidateCommand(CreateSaleCommand command, CancellationToken cancellationToken)
     {
-        foreach (var item in sale.Items)
-        {
-            if (item.Quantity < 4)
-            {
-                item.Discount = 0m;
-            }
-            else if (item.Quantity >= 4 && item.Quantity < 10)
-            {
-                item.Discount = 0.10m;
-            }
-            else if (item.Quantity >= 10 && item.Quantity <= 20)
-            {
-                item.Discount = 0.20m;
-            }
-            else if (item.Quantity > 20)
-            {
-                throw new InvalidOperationException("Não é possível vender acima de 20 itens idênticos.");
-            }
+        _logger.LogInformation("Validating CreateSaleCommand for {SaleId}", command.SaleNumber);
+        return await _validator.ValidateAsync(command, cancellationToken);
+    }
 
-            item.TotalAmount = item.Quantity * item.UnitPrice * (1 - item.Discount);
-        }
+    private void HandleValidationErrors(CreateSaleCommand command, ValidationResult validationResult)
+    {
+        _logger.LogWarning("Validation failed for {SaleId}: {Errors}", command.SaleNumber, validationResult.Errors);
+        throw new ValidationException(validationResult.Errors);
+    }
 
-        sale.TotalAmount = sale.Items.Sum(i => i.TotalAmount);
+    private void LogSuccess(CreateSaleCommand command)
+    {
+        _logger.LogInformation("CreateSaleCommand handled successfully for {SaleId}", command.SaleNumber);
     }
 }
